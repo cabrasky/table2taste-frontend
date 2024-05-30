@@ -1,0 +1,16 @@
+{
+    "es": {
+        "gui.menu.admin": "Menu de Administrador",
+        "gui.menu": "Menu",
+        "gui.addtocart": "Añadir al carrito",
+        "gui.allergens": "Alérgenos",
+        "gui.description": "Descripción"
+    },
+    "en": {
+        "gui.menu.admin": "Admin Menu",
+        "gui.menu": "Menu",
+        "gui.addtocart": "Add to cart",
+        "gui.allergens": "Allergens",
+        "gui.description": "Description"
+    }
+}

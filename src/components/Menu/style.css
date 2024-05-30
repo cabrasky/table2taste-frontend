@@ -1,0 +1,9 @@
+.menu-item-list {
+    display: flex;
+    padding: 25px;
+    align-items: flex-start;
+    align-content: flex-start;
+    gap: 10px;
+    align-self: stretch;
+    flex-wrap: wrap;
+}
