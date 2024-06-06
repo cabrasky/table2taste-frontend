@@ -1,27 +1,18 @@
-# Use the official Node.js image with LTS version
-FROM node:18
+# Stage 1: Build the React application
+FROM node:21 AS builder
 
-# Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
-
-# Copy the rest of the application files
 COPY . .
-
-# Build TypeScript files
+RUN ls
 RUN npm run build
 
-# Expose the port the app will run on
-EXPOSE 3000
-
-# Stage 2: Serve the react application using nginx
+# Stage 2: Serve the React application using nginx
 FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
+
+COPY --from=builder /app/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80
