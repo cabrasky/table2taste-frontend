@@ -6,7 +6,7 @@ import { getAxiosConfig, isTokenExpired } from '../utils/authUtils'; // Adjust t
 
 interface AuthContextType {
     token: string | null;
-    setToken: (newToken: string) => void;
+    setToken: (newToken: string|null) => void;
     user: User | null;
     config: AxiosRequestConfig;
 }

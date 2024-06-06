@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Category } from '../../models/Category';
 import Translate from '../Translate';
 import { Link } from 'react-router-dom';
+import './style.css'
 
 interface TreeMenuNodeProps {
     category: Category,

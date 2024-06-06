@@ -9,4 +9,5 @@ export interface Category {
     subCategories: Category[];
     menuItems: MenuItem[];
     translations: Translation[];
+    menuPriority: number;
 }

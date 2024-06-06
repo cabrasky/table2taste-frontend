@@ -6,6 +6,8 @@ interface Props {
     children: React.ReactNode;
 }
 
+
+
 export const Protected: React.FC<Props> = ({ privilege, children }) => {
     const { user } = useAuth();
     

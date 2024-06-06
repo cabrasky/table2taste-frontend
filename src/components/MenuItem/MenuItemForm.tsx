@@ -6,11 +6,11 @@ import { menuItemService } from '../../services/MenuItemService';
 import { categoryService } from '../../services/CategoryService';
 import { languageService } from '../../services/LanguageService';
 import { Language } from '../../models/Language';
-import { usePopup } from '../../contexts/PopupContext';
 import { useNavigate } from 'react-router-dom';
 import { Allergen } from '../../models/Allergen';
 import { allergenService } from '../../services/AllergenService';
-import { imageService } from '../../services/ImageService'; // Import the image service
+import { imageService } from '../../services/ImageService';
+import { showErrorPopup, showLoadingPopup, showSuccessPopup } from '../../utils/popupUtils';
 
 interface UserFormProps {
     menuItemId?: string;
@@ -27,20 +27,20 @@ interface MenuItemTranslationGroup {
 }
 
 const MenuItemForm: React.FC<UserFormProps> = ({ menuItemId, defaultCategoryId = "" }) => {
-    const { createPopup } = usePopup();
     const navigate = useNavigate();
 
     const [id, setId] = useState<string>("");
     const [categoryId, setCategoryId] = useState<string>("");
     const [mediaUrl, setMediaUrl] = useState<string>('');
     const [price, setPrice] = useState<number>(0);
+    const [menuPriority, setMenuPriority] = useState<number>(0);
     const [translations, setTranslations] = useState<MenuItemTranslationGroup>({});
     const [languages, setLanguages] = useState<Language[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [allergens, setAllergens] = useState<Allergen[]>([])
     const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
-    const [file, setFile] = useState<File | null>(null); // New state for file
-    const [showUrlInput, setShowUrlInput] = useState<boolean>(false); // State to toggle URL input visibility
+    const [file, setFile] = useState<File | null>(null);
+    const [showUrlInput, setShowUrlInput] = useState<boolean>(false);
     const languageSelector = useRef<HTMLSelectElement>(null);
 
     useEffect(() => {
@@ -50,7 +50,7 @@ const MenuItemForm: React.FC<UserFormProps> = ({ menuItemId, defaultCategoryId =
                 const categories = await categoryService.getAll();
                 setCategories(categories);
             } catch (error) {
-                createPopup('error', "Error loading Categories");
+                showErrorPopup("Error loading Categories");
             }
         };
 
@@ -59,7 +59,7 @@ const MenuItemForm: React.FC<UserFormProps> = ({ menuItemId, defaultCategoryId =
                 const languages = await languageService.getAll();
                 setLanguages(languages);
             } catch (error) {
-                createPopup('error', "Error Loading");
+                showErrorPopup("Error Loading");
             }
         };
 
@@ -68,7 +68,7 @@ const MenuItemForm: React.FC<UserFormProps> = ({ menuItemId, defaultCategoryId =
                 const allergens = await allergenService.getAll();
                 setAllergens(allergens);
             } catch (error) {
-                createPopup('error', "Error Loading");
+                showErrorPopup("Error Loading");
             }
         };
 
@@ -91,20 +91,20 @@ const MenuItemForm: React.FC<UserFormProps> = ({ menuItemId, defaultCategoryId =
                 });
                 setTranslations(translationsObject);
             } catch (error) {
-                createPopup('error', 'Error loading the item');
-                navigate(new URL('..', window.location.href).pathname);
+                showErrorPopup('Error loading the item');
+                navigate('/admin/');
             }
         };
 
         async function fetchData() {
-            createPopup('loading', "Loading");
+            showLoadingPopup("Loading");
             await Promise.all([fetchCategories(), fetchLanguages(), fetchAllergens()]);
             if (menuItemId) {
                 await fetchMenuItem(menuItemId);
             }
         }
         fetchData();
-    }, [menuItemId, defaultCategoryId]);
+    }, [menuItemId, defaultCategoryId, navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -126,6 +126,7 @@ const MenuItemForm: React.FC<UserFormProps> = ({ menuItemId, defaultCategoryId =
                         { language: { id: languageId }, translationKey: "description", value: translation.description }
                     ]
                 )),
+                menuPriority,
                 id: id,
                 allergens: selectedAllergens.map(selectedAllergen => ({
                     id: selectedAllergen
@@ -137,10 +138,10 @@ const MenuItemForm: React.FC<UserFormProps> = ({ menuItemId, defaultCategoryId =
             } else {
                 await menuItemService.create(menuItem);
             }
-            createPopup('success', "Menu Item added");
-            navigate(new URL(menuItemId ? '..' : './', window.location.href).pathname);
+            showSuccessPopup("Menu Item added");
+            navigate("/admin/");
         } catch (error) {
-            createPopup('error', "Error");
+            showErrorPopup(`Error: ${error}`);
         }
     };
 
@@ -204,10 +205,10 @@ const MenuItemForm: React.FC<UserFormProps> = ({ menuItemId, defaultCategoryId =
 
         try {
             await menuItemService.delete(menuItemId);
-            createPopup('success', 'Menu Item deleted successfully');
+            showSuccessPopup('Menu Item deleted successfully');
             navigate("/admin");
         } catch (error) {
-            createPopup('error', 'Error deleting the category');
+            showErrorPopup('Error deleting the category');
         }
     };
 
@@ -222,6 +223,10 @@ const MenuItemForm: React.FC<UserFormProps> = ({ menuItemId, defaultCategoryId =
                 <div>
                     <label>Price:</label>
                     <input type="number" step="0.01" value={price} onChange={(e) => setPrice(parseFloat(e.target.value))} />
+                </div>
+                <div>
+                    <label>Menu Priority:</label>
+                    <input type="number" step={1} value={menuPriority} onChange={(e) => setMenuPriority(parseInt(e.target.value))} />
                 </div>
                 <div>
                     <label>Category:</label>

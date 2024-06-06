@@ -10,4 +10,5 @@ export interface MenuItem {
     category?: Partial<Category> | null;
     allergens: Partial<Allergen>[]
     categoryId?: string;
+    menuPriority: number;
 }

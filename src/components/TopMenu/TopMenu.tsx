@@ -10,7 +10,7 @@ import { Protected } from "../Protected";
 
 export const TopMenu: React.FC = () => {
     const { cart } = useCart();
-    const { user } = useAuth()
+    const { user, setToken } = useAuth()
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
     return (
@@ -25,7 +25,7 @@ export const TopMenu: React.FC = () => {
                 </div>
                 <div className="user">
                     {user !== null ? (
-                        <>{user.name}</>
+                        <p onClick={() => setToken(null)}>{user.name}</p>
                     ) : (
                         <Link to='/login'>
                             Login

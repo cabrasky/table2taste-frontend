@@ -15,7 +15,7 @@ interface Props {
   admin?: boolean
 }
 
-const MenuItemListedElement: React.FC<Props> = ({ menuItem, admin }) => {
+const MenuItemView: React.FC<Props> = ({ menuItem, admin }) => {
   const { addToCart } = useCart();
 
 
@@ -52,7 +52,7 @@ const MenuItemListedElement: React.FC<Props> = ({ menuItem, admin }) => {
             }}>
               <div className="price">{menuItem.price}€</div>
               <div className="text-wrapper-2">Añadir al pedido</div>
-              <Icon component={ShoppingCart} />
+              <Icon component={ShoppingCart} className="add-shopping-cart"/>
             </button>
           </Protected>
           {admin ?
@@ -71,4 +71,4 @@ const MenuItemListedElement: React.FC<Props> = ({ menuItem, admin }) => {
   );
 };
 
-export default MenuItemListedElement;
+export default MenuItemView;

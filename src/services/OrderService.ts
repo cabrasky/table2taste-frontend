@@ -2,14 +2,41 @@ import axios from "axios";
 import { API_HOST } from "./conts";
 import { CartItem } from "../models/CartItem";
 import { getAxiosConfig } from "../utils/authUtils";
+import { ErrorMessage } from "../utils/popupUtils";
+import { Order } from "../models/Order";
 
-class OrderService{
+class OrderService {
     protected baseUrl = `${API_HOST}/order`;
 
-    async order(data: CartItem[], ): Promise<void> {
-        return (await axios.post(`${this.baseUrl}`, {
-            orderItems: data
-        }, getAxiosConfig())).data;
+    async order(data: CartItem[], table?: number): Promise<void> {
+        try {
+            await axios.post<void>(`${this.baseUrl}${table ? `?tableId=${table}` : ""}`, { orderItems: data }, getAxiosConfig());
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                const errorMessage: ErrorMessage = error.response.data;
+                console.error('Error placing order:', errorMessage);
+                throw new Error(errorMessage.message);
+            } else {
+                console.error('Unexpected error:', error);
+                throw new Error('Unexpected error occurred');
+            }
+        }
+    }
+
+    async getOrderHistory(table?: number): Promise<Order[]> {
+        try {
+            const response = await axios.get<Order[]>(`${this.baseUrl}/history${table ? `?table=${table}` : ""}`, getAxiosConfig());
+            return response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                const errorMessage: ErrorMessage = error.response.data;
+                console.error('Error fetching order history:', errorMessage);
+                throw new Error(errorMessage.message);
+            } else {
+                console.error('Unexpected error:', error);
+                throw new Error('Unexpected error occurred');
+            }
+        }
     }
 }
 

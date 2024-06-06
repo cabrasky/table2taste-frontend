@@ -1,12 +1,17 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Translate from "../../components/Translate";
 import { useCart } from "../../contexts/CartContext";
-import { menuItemService } from "../../services/MenuItemService";
-import { MenuItem } from "../../models/MenuItem";
+import { Link } from "react-router-dom";
+import { Protected } from "../../components/Protected";
+import { useBreadcrumbs } from "../../contexts/BreadcrumbContext";
+import { tableService } from "../../services/TableService";
 
 const CartPage: React.FC = () => {
-    const { cart, clearCart, updateCart, order } = useCart();
-    const [menuItems, setMenuItems] = useState<{ [key: string]: MenuItem }>({});
+    const { cart, menuItems, clearCart, updateCart, order, fetchMenuItems } = useCart();
+    const [loading, setLoading] = useState(false);
+    const [selectedTable, setSelectedTable] = useState<number|undefined>(1);
+    const {setBreadcrumbs} = useBreadcrumbs();
+    const [tables, setTables] = useState<number[]>([])
 
     const handleQuantityChange = (index: number, quantity: number) => {
         updateCart(cart.map((cartItem, i) => i === index ? { ...cartItem, quantity } : cartItem));
@@ -21,23 +26,38 @@ const CartPage: React.FC = () => {
     };
 
     useEffect(() => {
-        const fetchData = async () => {
-            const menuItemsData: { [key: string]: MenuItem } = {};
-            await Promise.all(
-                cart.map(async (cartItem) => {
-                    const data = await menuItemService.get(cartItem.id);
-                    menuItemsData[cartItem.id] = data;
-                })
-            );
-            setMenuItems(menuItemsData);
-        };
-
-        fetchData();
+        fetchMenuItems();
+        setBreadcrumbs([]);
+        tableService.allIds().then(data => {
+            setTables(data)
+        })
     }, [cart]);
+
+    const handleOrder = async () => {
+        setLoading(true);
+        await order(selectedTable);
+        setLoading(false);
+    };
+
+    const handleTableSelect = (table: number) => {
+        setSelectedTable(table);
+    };
 
     return (
         <div className="cart-page">
             <h1>Your Cart</h1>
+            <Protected privilege="PLACE_ORDER_TO_OTHERS">
+                <div>
+                    <select onChange={(e) => handleTableSelect(parseInt(e.target.value))}>
+                        {tables.map(table => (
+                            <option key={table} value={table}>
+                                {table}
+                            </option>
+                        ))}
+                    </select>
+                    {selectedTable && <p>Selected Table: {selectedTable}</p>}
+                </div>
+            </Protected>
             {cart.length === 0 ? (
                 <p>Your cart is empty</p>
             ) : (
@@ -75,12 +95,14 @@ const CartPage: React.FC = () => {
                     </ul>
                     <div className="cart-actions">
                         <button onClick={() => clearCart()}>Clear Cart</button>
-                        <button onClick={() => {
-                            order();
-                        }}>Order</button>
+                        <button onClick={handleOrder} disabled={loading}>{loading ? 'Ordering...' : 'Order'}</button>
                     </div>
                 </>
             )}
+
+            <div className="cart-actions">
+                <Link to="/order-history">Order History</Link>
+            </div>
         </div>
     );
 };

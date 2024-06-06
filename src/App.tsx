@@ -3,23 +3,25 @@ import { AppRoutes } from './components/AppRoutes';
 import { LanguageProvider } from './contexts/LanguageContext';
 import './app.css'
 import { BreadcrumbsProvider } from './contexts/BreadcrumbContext';
-import { PopupProvider } from './contexts/PopupContext';
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const App: React.FC = () => {
     return (
-        <LanguageProvider>
-            <AuthProvider>
-                <BreadcrumbsProvider>
-                    <CartProvider>
-                        <PopupProvider>
+        <>
+            <ToastContainer />
+            <LanguageProvider>
+                <AuthProvider>
+                    <BreadcrumbsProvider>
+                        <CartProvider>
                             <AppRoutes />
-                        </PopupProvider>
-                    </CartProvider>
-                </BreadcrumbsProvider>
-            </AuthProvider>
-        </LanguageProvider>
+                        </CartProvider>
+                    </BreadcrumbsProvider>
+                </AuthProvider>
+            </LanguageProvider>
+        </>
     );
 };
 

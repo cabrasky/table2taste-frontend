@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { Category } from '../../models/Category';
 import { categoryService } from '../../services/CategoryService';
-import { usePopup } from '../../contexts/PopupContext';
 import { useNavigate } from 'react-router-dom';
 import Translate from '../Translate';
 import { Language } from '../../models/Language';
 import { languageService } from '../../services/LanguageService';
+import { hideLoadingPopup, showErrorPopup, showLoadingPopup, showSuccessPopup } from '../../utils/popupUtils';
+import { imageService } from '../../services/ImageService';
 
 interface CategoryFormProps {
     categoryId?: string;
@@ -21,16 +22,17 @@ interface CategoryTranslationGroup {
 }
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ categoryId, defaultParentCategoryId = "" }) => {
-    const { createPopup, closePopup } = usePopup();
     const navigate = useNavigate();
 
     const [id, setId] = useState<string>("")
     const [mediaUrl, setMediaUrl] = useState<string>('');
     const [parentCategoryId, setParentCategoryId] = useState<string>("");
+    const [menuPriority, setMenuPriority] = useState<number>(0);
     const [translations, setTranslations] = useState<CategoryTranslationGroup>({});
     const [languages, setLanguages] = useState<Language[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
-
+    const [file, setFile] = useState<File | null>(null);
+    const [showUrlInput, setShowUrlInput] = useState<boolean>(false);
     const languageSelector = useRef<HTMLSelectElement>(null);
 
     useEffect(() => {
@@ -40,7 +42,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ categoryId, defaultParentCa
                 const allCategories = await categoryService.getAll();
                 setCategories(allCategories);
             } catch (error) {
-                createPopup('error', 'Error loading categories');
+                hideLoadingPopup();
             }
         };
 
@@ -49,7 +51,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ categoryId, defaultParentCa
                 const languages = await languageService.getAll();
                 setLanguages(languages);
             } catch (error) {
-                createPopup('error', "Error Loading");
+                showErrorPopup("Error Loading");
             }
         };
 
@@ -70,28 +72,34 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ categoryId, defaultParentCa
                 });
                 setTranslations(translationsObject);
             } catch (error) {
-                createPopup('error', 'Error loading the category');
+                showErrorPopup('Error loading the category');
                 navigate(new URL('..', window.location.href).pathname);
             }
         };
 
         async function fetchData() {
-            createPopup('loading', "Loading");
-            Promise.all([fetchCategories(), fetchLanguages()]).then(() => {
-                closePopup();
+            showLoadingPopup("Loading");
+            Promise.all([fetchCategories(), fetchLanguages()]).finally(() => {
+                hideLoadingPopup();
             });
         }
         fetchData();
         if (categoryId) {
             fetchCategory(categoryId);
         }
-    }, [categoryId, defaultParentCategoryId]);
+    }, [categoryId, defaultParentCategoryId, navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            let uploadedMediaUrl = mediaUrl;
+
+            if (file) {
+                const response = await imageService.uploadImage(file);
+                uploadedMediaUrl = response.url;
+            }
             const category: Category = {
-                mediaUrl: mediaUrl,
+                mediaUrl: uploadedMediaUrl,
                 parentCategoryId: parentCategoryId,
                 translations: Object.entries(translations).map(([languageId, translation]) => (
                     {
@@ -104,6 +112,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ categoryId, defaultParentCa
                 )),
                 menuItems: [],
                 subCategories: [],
+                menuPriority,
                 id: id
             };
 
@@ -112,10 +121,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ categoryId, defaultParentCa
             } else {
                 await categoryService.create(category);
             }
-            createPopup('success', 'Category saved successfully');
+            showSuccessPopup('Category saved successfully');
             navigate(new URL(categoryId ? '..' : './', window.location.href).pathname);
         } catch (error) {
-            createPopup('error', 'Error saving the category');
+            showErrorPopup('Error saving the category');
         }
     };
 
@@ -124,10 +133,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ categoryId, defaultParentCa
 
         try {
             await categoryService.delete(categoryId);
-            createPopup('success', 'Category deleted successfully');
+            showSuccessPopup('Category deleted successfully');
             navigate("/admin");
         } catch (error) {
-            createPopup('error', 'Error deleting the category');
+            showErrorPopup('Error deleting the category');
         }
     };
 
@@ -161,6 +170,28 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ categoryId, defaultParentCa
         });
     };
 
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setFile(e.target.files[0]);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (e.target && e.target.result) {
+                    setMediaUrl(e.target.result as string);
+                }
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    };
+
+    const handleResetMedia = () => {
+        setFile(null);
+        setMediaUrl('');
+    };
+
+    const handleUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setMediaUrl(e.target.value);
+    };
+
     return (
         <div className='form'>
             <h2>{categoryId ? 'Modify Category' : 'Create Category'}</h2>
@@ -170,8 +201,34 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ categoryId, defaultParentCa
                     <input type="text" value={id} onChange={(e) => setId(e.target.value)} />
                 </div>
                 <div>
-                    <label>Media URL:</label>
-                    <input type="text" value={mediaUrl} onChange={(e) => setMediaUrl(e.target.value)} />
+                    <label>Media:</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <input type="file" accept="image/*" onChange={handleFileChange} />
+                        <button type="button" onClick={() => setShowUrlInput(!showUrlInput)}>
+                            {showUrlInput ? 'Upload Image' : 'Insert Link'}
+                        </button>
+                        {showUrlInput && (
+                            <input
+                                type="text"
+                                value={mediaUrl}
+                                onChange={handleUrlChange}
+                                placeholder="Insert image URL"
+                                style={{ display: 'block', width: '100%', marginTop: '10px' }}
+                            />
+                        )}
+                        {mediaUrl && (
+                            <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                                <img src={mediaUrl} alt="Preview" style={{ maxWidth: '100%', height: 'auto' }} />
+                                <button type="button" onClick={handleResetMedia} style={{ marginTop: '10px' }}>
+                                    Reset
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+                <div>
+                    <label>Menu Priority:</label>
+                    <input type="number" step={1} value={menuPriority} onChange={(e) => setMenuPriority(parseInt(e.target.value))} />
                 </div>
                 <div>
                     <label>Parent Category:</label>

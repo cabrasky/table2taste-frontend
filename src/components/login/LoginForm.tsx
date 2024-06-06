@@ -1,26 +1,39 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {userService} from '../../services/UserService';
 import {  useAuth } from '../../contexts/AuthContext';
-import { usePopup } from '../../contexts/PopupContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { showErrorPopup } from '../../utils/popupUtils';
 
 const LoginForm: React.FC = () => {
-    const { createPopup } = usePopup();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
 
     const [username, setUsername] = useState<string>('');
     const [password, setPassword] = useState<string>('');
 
     const {setToken} = useAuth();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    useEffect(() => {
+        const tableId = searchParams.get("tableId");
+        if(tableId){
+            login(tableId);
+        }
+    }, [searchParams])
+
+    const handleSubmit = (e?: React.FormEvent) => {
+        if(e){
+            e.preventDefault();
+        }
+        login(username, password);
+    }
+
+    const login = async (username: string, password: string = "") => {
         userService.login(username, password).then(data => {
             setToken(data.accessToken);
             
             navigate("/");
         }).catch(reason => {            
-            createPopup("error", reason)
+            showErrorPopup(reason)
         })
     };
 
@@ -34,7 +47,7 @@ const LoginForm: React.FC = () => {
                 </div>
                 <div>
                     <label>Password:</label>
-                    <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
                 <button type="submit">Login</button>
             </form>
