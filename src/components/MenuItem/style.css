@@ -106,10 +106,8 @@
   font-size: var(--h2-font-size);
   font-style: var(--h2-font-style);
   font-weight: var(--h2-font-weight);
-  height: 65px;
   letter-spacing: var(--h2-letter-spacing);
   line-height: var(--h2-line-height);
-  margin-top: -1px;
   position: relative;
   text-align: center;
 }
