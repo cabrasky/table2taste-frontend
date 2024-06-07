@@ -9,11 +9,13 @@ import { Protected } from "../../components/Protected";
 import TableSelector from "../Cart/TableSelector";
 import { Icon } from "@mui/material";
 import { PointOfSale, ShoppingCart } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 const ViewReceiptPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const { addToCart } = useCart();
     const [selectedTable, setSelectedTable] = useState<number | undefined>(undefined);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchOrderHistory(selectedTable);
@@ -27,7 +29,7 @@ const ViewReceiptPage: React.FC = () => {
             hideLoadingPopup();
         } catch (error) {
             console.error("Error fetching order history:", error);
-            showErrorPopup("Failed to fetch order history. Please try again later."); // Show error status
+            showErrorPopup("Failed to fetch order history. Please try again later.");
         }
     };
 
@@ -46,9 +48,10 @@ const ViewReceiptPage: React.FC = () => {
             showLoadingPopup("Closing service and ordering ticket...");
             await orderService.closeServiceAndOrderTicket(selectedTable);
             showSuccessPopup("Service closed and ticket ordered successfully!");
+            navigate("/");
         } catch (error) {
             console.error("Error closing service and ordering ticket:", error);
-            showErrorPopup("Failed to close service and order ticket. Please try again."); // Show error status
+            showErrorPopup("Failed to close service and order ticket. Please try again.");
         } finally {
             hideLoadingPopup();
         }
@@ -114,7 +117,7 @@ const ViewReceiptPage: React.FC = () => {
                     ))}
                 </ul>
             )}
-            <button onClick={closeServiceAndOrderTicket}>
+            <button onClick={closeServiceAndOrderTicket} disabled={!orders || orders.length === 0}>
                 <Icon component={PointOfSale}/>
                 <Translate translationKey="gui.closeServiceAndOrderTicket" />
             </button>

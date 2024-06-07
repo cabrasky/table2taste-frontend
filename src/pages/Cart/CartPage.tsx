@@ -91,16 +91,16 @@ const CartPage: React.FC = () => {
                                     <input
                                         id={`quantity-${item.id}`}
                                         type="number"
-                                        value={item.quantity}
+                                        defaultValue={item.quantity}
                                         min="1"
-                                        onChange={(e) => handleQuantityChange(index, parseInt(e.target.value))}
+                                        onBlur={(e) => handleQuantityChange(index, parseInt(e.target.value))}
                                     />
                                     <div>
                                         <label htmlFor={`annotations-${item.id}`}>Annotations:</label>
                                         <textarea
                                             id={`annotations-${item.id}`}
-                                            value={item.annotations}
-                                            onChange={(e) => handleAnnotationsChange(index, e.target.value)}
+                                            defaultValue={item.annotations}
+                                            onBlur={(e) => handleAnnotationsChange(index, e.target.value)}
                                         />
                                     </div>
                                     <button onClick={() => removeFromCart(index)}>Remove</button>
