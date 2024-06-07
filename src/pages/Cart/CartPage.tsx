@@ -1,62 +1,77 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Translate from "../../components/Translate";
 import { useCart } from "../../contexts/CartContext";
 import { Link } from "react-router-dom";
 import { Protected } from "../../components/Protected";
 import { useBreadcrumbs } from "../../contexts/BreadcrumbContext";
-import { tableService } from "../../services/TableService";
+import TableSelector from "./TableSelector";
+import './style.css'
+import { ReceiptLong } from "@mui/icons-material";
+import { Icon } from "@mui/material";
 
 const CartPage: React.FC = () => {
     const { cart, menuItems, clearCart, updateCart, order, fetchMenuItems } = useCart();
     const [loading, setLoading] = useState(false);
-    const [selectedTable, setSelectedTable] = useState<number|undefined>(1);
-    const {setBreadcrumbs} = useBreadcrumbs();
-    const [tables, setTables] = useState<number[]>([])
+    const [selectedTable, setSelectedTable] = useState<number | undefined>(1);
+    const { setBreadcrumbs } = useBreadcrumbs();
+    const [fetching, setFetching] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleQuantityChange = (index: number, quantity: number) => {
+    const handleQuantityChange = useCallback((index: number, quantity: number) => {
         updateCart(cart.map((cartItem, i) => i === index ? { ...cartItem, quantity } : cartItem));
-    };
+    }, [cart, updateCart]);
 
-    const handleAnnotationsChange = (index: number, annotations: string) => {
+    const handleAnnotationsChange = useCallback((index: number, annotations: string) => {
         updateCart(cart.map((cartItem, i) => i === index ? { ...cartItem, annotations } : cartItem));
-    };
+    }, [cart, updateCart]);
 
-    const removeFromCart = (index: number) => {
+    const removeFromCart = useCallback((index: number) => {
         updateCart(cart.filter((_, i) => i !== index));
-    };
+    }, [cart, updateCart]);
 
     useEffect(() => {
-        fetchMenuItems();
-        setBreadcrumbs([]);
-        tableService.allIds().then(data => {
-            setTables(data)
-        })
-    }, [cart]);
+        const fetchData = async () => {
+            try {
+                setFetching(true);
+                await fetchMenuItems();
+                setBreadcrumbs([]);
+                setError(null);
+            } catch (err) {
+                setError("Failed to fetch data. Please try again later.");
+            } finally {
+                setFetching(false);
+            }
+        };
+
+        fetchData();
+    }, [fetchMenuItems, setBreadcrumbs]);
 
     const handleOrder = async () => {
         setLoading(true);
-        await order(selectedTable);
-        setLoading(false);
+        try {
+            await order(selectedTable);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleTableSelect = (table: number) => {
         setSelectedTable(table);
     };
 
+    if (fetching) {
+        return <p>Loading...</p>;
+    }
+
+    if (error) {
+        return <p>{error}</p>;
+    }
+
     return (
         <div className="cart-page">
             <h1>Your Cart</h1>
             <Protected privilege="PLACE_ORDER_TO_OTHERS">
-                <div>
-                    <select onChange={(e) => handleTableSelect(parseInt(e.target.value))}>
-                        {tables.map(table => (
-                            <option key={table} value={table}>
-                                {table}
-                            </option>
-                        ))}
-                    </select>
-                    {selectedTable && <p>Selected Table: {selectedTable}</p>}
-                </div>
+                <TableSelector selectedTable={selectedTable} onTableSelect={handleTableSelect} />
             </Protected>
             {cart.length === 0 ? (
                 <p>Your cart is empty</p>
@@ -101,7 +116,7 @@ const CartPage: React.FC = () => {
             )}
 
             <div className="cart-actions">
-                <Link to="/order-history">Order History</Link>
+                <Link to="/view-receipt"><Translate translationKey="gui.seereceipt"/> <Icon component={ReceiptLong} /></Link>
             </div>
         </div>
     );

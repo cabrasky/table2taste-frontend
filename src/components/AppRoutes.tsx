@@ -4,12 +4,13 @@ import MenuView from "../pages/MenuView/MenuView";
 import { MenuItemFormPage } from "../pages/admin/MenuItem/MenuItemFormPage";
 import { MainPageLayout } from "../pages/MainPageLayout";
 import CartPage from "../pages/Cart/CartPage";
-import LoginForm from "./login/LoginForm";
+import LoginForm from "./Login/LoginForm";
 import { useAuth } from "../contexts/AuthContext";
 import ErrorPage from "../pages/ErrorPage";
-import OrderHistoryPage from "../pages/OrderHistory/OrderHistoryPage";
+import ViewReceiptPage from "../pages/ViewReceipt/ViewReceiptPage";
 import { CategoryFormPage } from "../pages/admin/Category/CagetoryFormPage";
 import { MenuItemPage } from "../pages/MenuItemView/MenuViewPage";
+import TableStatusPage from "../pages/TableStatus/TablestatusPage";
 
 const baseRoutes: RouteObject[] = [
   { index: true, element: <MenuView /> },
@@ -17,7 +18,8 @@ const baseRoutes: RouteObject[] = [
   { path: "category/:id", element: <MenuView /> },
   { path: "menuItem/:id", element: <MenuItemPage /> },
   { path: "cart", element: <CartPage /> },
-  { path: "order-history", element: <OrderHistoryPage /> }
+  { path: "view-receipt", element: <ViewReceiptPage /> },
+  { path: "tableview", element: <TableStatusPage /> }
 ];
 
 const adminRoutes: RouteObject = {

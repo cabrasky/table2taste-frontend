@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { CartItem } from '../models/CartItem';
 import { orderService } from '../services/OrderService';
 import { menuItemService } from '../services/MenuItemService';
@@ -43,7 +43,7 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
         localStorage.setItem('cart', JSON.stringify(cart));
     }, [cart]);
 
-    const fetchMenuItems = async () => {
+    const fetchMenuItems = useCallback(async () => {
         showLoadingPopup('Loading your cart...');
         try {
             const menuItemsData: { [key: string]: MenuItem } = {};
@@ -60,9 +60,9 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
         } finally {
             hideLoadingPopup();
         }
-    };
+    }, [cart]);
 
-    const addToCart = (item: CartItem) => {
+    const addToCart = useCallback((item: CartItem) => {
         setCart(prevCart => {
             const existingItem = prevCart.find(cartItem => cartItem.id === item.id && cartItem.annotations === item.annotations);
             if (existingItem) {
@@ -77,17 +77,17 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
                 return [...prevCart, item];
             }
         });
-    };
+    }, []);
 
-    const updateCart = (newCart: CartItem[]) => {
+    const updateCart = useCallback((newCart: CartItem[]) => {
         setCart(newCart);
-    };
+    }, []);
 
-    const clearCart = () => {
+    const clearCart = useCallback(() => {
         setCart([]);
-    };
+    }, []);
 
-    const order = async (tableId?: number) => {
+    const order = useCallback(async (tableId?: number) => {
         showLoadingPopup('Processing your order...');
         try {
             await orderService.order(cart, tableId);
@@ -99,10 +99,20 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
         } finally {
             hideLoadingPopup();
         }
-    };
+    }, [cart]);
+
+    const contextValue = useMemo(() => ({
+        cart,
+        menuItems,
+        addToCart,
+        updateCart,
+        clearCart,
+        order,
+        fetchMenuItems
+    }), [cart, menuItems, addToCart, updateCart, clearCart, order, fetchMenuItems]);
 
     return (
-        <CartContext.Provider value={{ cart, menuItems, addToCart, updateCart, clearCart, order, fetchMenuItems }}>
+        <CartContext.Provider value={contextValue}>
             {children}
         </CartContext.Provider>
     );

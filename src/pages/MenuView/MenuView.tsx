@@ -53,7 +53,7 @@ const MenuView: React.FC<Props> = ({ admin = false }) => {
                     ...ancestors.reverse().map(categoryAncestor => ({
                         url: `${admin ? "/admin" : ""}/category/${categoryAncestor.id}`,
                         label: <Translate translationKey="name" dataSet={categoryAncestor.translations} />
-                    })),
+                    }))
                 ]);
 
                 hideLoadingPopup();

@@ -1,16 +1,15 @@
 import axios from "axios";
 import { API_HOST } from "./conts";
-import { CartItem } from "../models/CartItem";
 import { getAxiosConfig } from "../utils/authUtils";
 import { ErrorMessage } from "../utils/popupUtils";
-import { Order } from "../models/Order";
+import { Table } from "../models/Table";
 
 class TableService {
-    protected baseUrl = `${API_HOST}/table`;
+    protected baseUrl = `${API_HOST}/tables`;
 
-    async allIds(): Promise<number[]> {
+    async all(): Promise<Table[]> {
         try {
-            const response = await axios.get<number[]>(this.baseUrl, getAxiosConfig());
+            const response = await axios.get<Table[]>(this.baseUrl, getAxiosConfig());
             return response.data;
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
